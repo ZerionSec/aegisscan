@@ -11,31 +11,40 @@ Built for:
 - Local security labs
 - Educational environments
 
-> **Important:** This tool is intended **only** for educational use and authorized security assessments. Always obtain proper written permission before scanning any system you do not own.
+> **Important:** Use only on systems you own or have explicit written permission to test.
 
 ---
 
 ## Overview
 
-AegisScan performs a risk-based defensive assessment of web applications. It checks for common misconfigurations, missing security headers, weak TLS configurations, exposed sensitive files, insecure cookies, and more — then produces clear, actionable findings with remediation guidance.
+AegisScan performs non-intrusive checks focused on defensive security posture:
+
+- Security headers (HSTS, CSP, X-Frame-Options, etc.)
+- TLS protocol inspection
+- Cookie security attributes
+- CORS configuration review
+- Common exposed-path detection
+- Basic port & subdomain discovery
+- Technology fingerprinting
+- Conservative secret detection (with masking)
+- Risk-based findings with remediation guidance
+- Text / JSON / HTML reports
 
 ---
 
 ## Features
 
-| Category | Checks |
-|----------|--------|
-| **Security Headers** | HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy |
-| **Transport** | TLS version & cipher inspection, HTTP→HTTPS redirect |
-| **Cookies** | Secure, HttpOnly, SameSite attributes |
-| **CSP** | Detection of `unsafe-inline`, `unsafe-eval`, wildcards |
-| **CORS** | Wildcard origin detection |
-| **Exposure** | Common sensitive paths (`.env`, `.git`, backups, config files) |
-| **Network** | Basic TCP port discovery for common & sensitive services |
-| **Discovery** | Lightweight subdomain enumeration |
-| **Fingerprinting** | Technology detection (CMS, servers, frameworks) |
-| **Secrets** | Conservative pattern matching with automatic masking |
-| **Reporting** | Text, JSON, and HTML reports with risk scoring |
+| Category              | Checks                                      |
+|-----------------------|---------------------------------------------|
+| Security Headers      | HSTS, CSP, XFO, XCTO, Referrer-Policy, Permissions-Policy |
+| Transport Security    | TLS version, HTTPS redirect                 |
+| Cookies               | Secure, HttpOnly, SameSite                  |
+| CORS                  | Wildcard / overly permissive policies       |
+| Information Exposure  | Sensitive paths, directory listing, banners |
+| Network               | Common ports, basic subdomains              |
+| Fingerprinting        | Technology signatures                       |
+| Secrets               | Pattern-based detection with masking        |
+| Reporting             | Text, JSON, HTML + risk score               |
 
 ---
 
@@ -43,27 +52,20 @@ AegisScan performs a risk-based defensive assessment of web applications. It che
 
 ```
 AegisScan/
-│
-├── scanner.py              # Main scanner logic & CLI
+├── scanner.py              # Main scanner & CLI
 ├── requirements.txt
 ├── README.md
 ├── LICENSE
 ├── .gitignore
-│
 ├── docs/
 │   ├── methodology.md
 │   ├── installation.md
 │   └── risk-scoring.md
-│
 ├── tests/
 │   └── test_scanner.py
-│
-├── reports/
-│   └── .gitkeep
-│
-└── .github/
-    └── workflows/
-        └── python-tests.yml
+├── reports/                # Output directory
+└── .github/workflows/
+    └── python-tests.yml
 ```
 
 ---
@@ -76,13 +78,13 @@ cd aegisscan
 pip install -r requirements.txt
 ```
 
-Requires **Python 3.8+**.
+See [docs/installation.md](docs/installation.md) for more details.
 
 ---
 
 ## Usage
 
-### Basic scan (text output)
+### Basic scan (text report)
 
 ```bash
 python scanner.py https://example.com
@@ -91,7 +93,7 @@ python scanner.py https://example.com
 ### Multiple targets
 
 ```bash
-python scanner.py https://example.com https://test.example.com
+python scanner.py https://target1.com https://target2.com
 ```
 
 ### JSON report
@@ -106,106 +108,55 @@ python scanner.py https://example.com --json -o report.json
 python scanner.py https://example.com --html -o report.html
 ```
 
-### With proxy and custom rate limit
-
-```bash
-python scanner.py https://example.com --proxy http://127.0.0.1:8080 --rate-limit 0.5
-```
-
 ### Options
 
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--json` | Output JSON report | — |
-| `--html` | Output HTML report | — |
-| `-o / --output` | Save report to file | stdout |
-| `--proxy` | HTTP/HTTPS proxy | none |
-| `--rate-limit` | Delay between requests (seconds) | 0.3 |
-| `--timeout` | Request timeout (seconds) | 10 |
+```
+--proxy http://127.0.0.1:8080   # Route through proxy
+--rate-limit 0.5                # Delay between requests (seconds)
+--timeout 15                    # Request timeout
+-o / --output FILE              # Save report to file
+```
 
 ---
 
-## Example Output
+## Example Output (summary)
 
 ```
-==============================================================================
-  AegisScan v3.2
-  Target: https://example.com
-  Risk Score: 17/100
+[*] Web Security Scanner v3.2
+[*] Target: https://example.com
+
+==============================================================
+  Risk Score: 12/100
   Risk Level: LOW
-  Timestamp: 2026-08-20T...
-==============================================================================
+==============================================================
 
 [+] Finding Summary
     CRITICAL: 0
     HIGH: 0
     MEDIUM: 2
-    LOW: 3
-    INFO: 0
-
-[+] Findings
-
-  [MEDIUM] WS-HDR-001 - HSTS header missing
-    Category: Security Headers
-    Confidence: HIGH
-    Score: +5
-    Evidence: Strict-Transport-Security header is missing.
-    Remediation: Configure HSTS after confirming the site is fully HTTPS-capable.
+    LOW: 1
 ```
 
 ---
 
 ## Risk Scoring
 
-AegisScan uses a simple additive scoring model (capped at 100):
+AegisScan produces a **project-specific risk indicator** (0–100).  
+It is **not** a CVSS score.
 
-| Severity | Points |
-|----------|--------|
-| CRITICAL | 20 |
-| HIGH | 10 |
-| MEDIUM | 5 |
-| LOW | 1–2 |
-
-**Risk Levels:**
-- **CRITICAL** ≥ 70
-- **HIGH** ≥ 50
-- **MEDIUM** ≥ 25
-- **LOW** < 25
-
-This is a **project-specific indicator**, not a CVSS score.
-
-See [docs/risk-scoring.md](docs/risk-scoring.md) for details.
+Details: [docs/risk-scoring.md](docs/risk-scoring.md)
 
 ---
 
-## Security Checks
+## Security Checks & Defensive Recommendations
 
-- Missing or weak security headers
-- Insecure cookie attributes
-- Weak or missing CSP directives
-- Wildcard CORS policies
-- Accessible sensitive files (`.env`, `.git/config`, backups, etc.)
-- Exposed administrative/database ports
-- Weak TLS protocols
-- Missing HTTPS redirects
-- Potential secrets in responses (masked in reports)
-- Directory listing indicators
-- Server banner disclosure
+Every finding includes:
 
----
+- Severity & confidence
+- Evidence
+- Concrete remediation guidance
 
-## Defensive Recommendations
-
-Every finding includes a clear remediation suggestion. Typical recommendations include:
-
-- Enforce HTTPS and HSTS
-- Deploy a strict Content-Security-Policy
-- Set Secure, HttpOnly, and SameSite on cookies
-- Restrict CORS to trusted origins
-- Remove sensitive files from the web root
-- Limit exposure of administrative services
-- Disable directory indexing
-- Minimize server version disclosure
+The goal is to help defenders improve configuration, not to enable attacks.
 
 ---
 
@@ -213,50 +164,50 @@ Every finding includes a clear remediation suggestion. Typical recommendations i
 
 ```bash
 pip install pytest
-pytest tests/
+pytest tests/ -v
 ```
 
 ---
 
 ## Limitations
 
-- Not a full vulnerability scanner (no active exploitation)
-- Subdomain discovery is limited to a small wordlist
-- Port scanning is basic TCP connect
-- Secret detection is conservative and pattern-based only
-- Designed for authorized, low-impact assessments
+- Lightweight / educational tool — not a full commercial scanner
+- Port & subdomain discovery is intentionally limited
+- Secret detection is heuristic
+- Always validate findings manually
+
+See [docs/methodology.md](docs/methodology.md)
 
 ---
 
 ## Legal & Authorized Testing Notice
 
-**You must only use AegisScan against systems you own or have explicit written authorization to test.**
+**Use AegisScan only on systems you own or have explicit authorization to assess.**
 
-Unauthorized scanning may violate laws in your jurisdiction. The authors assume no liability for misuse.
-
-This tool is provided for **defensive security education and authorized assessments only**.
+Unauthorized scanning may violate laws and terms of service.  
+The authors assume no liability for misuse.
 
 ---
 
 ## Roadmap
 
-- [ ] Additional security header checks
-- [ ] Configurable wordlists for paths and subdomains
-- [ ] Export findings to SARIF
-- [ ] Docker support
-- [ ] Plugin architecture for custom checks
+- [ ] Improved CSP analysis
+- [ ] Additional passive checks
+- [ ] Better HTML report styling
+- [ ] Configuration file support
+- [ ] Docker image
 
 ---
 
 ## Contributing
 
-Contributions are welcome. Please open an issue or pull request. Keep the focus on **defensive** and **authorized** security assessment use cases.
+Pull requests and issues are welcome. Please keep the project focused on **defensive** and **authorized** use cases.
 
 ---
 
 ## License
 
-MIT License — see [LICENSE](LICENSE).
+MIT License — see [LICENSE](LICENSE)
 
 ---
 
