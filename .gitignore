@@ -37,18 +37,19 @@ ENV/
 *.swp
 *.swo
 
-# Reports (generated)
-reports/*.html
-reports/*.json
-reports/*.txt
+# Reports (keep directory, ignore contents)
+reports/*
 !reports/.gitkeep
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Testing
+# Test / coverage
 .coverage
 htmlcov/
 .pytest_cache/
 .tox/
+
+# Local config
+*.local

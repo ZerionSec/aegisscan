@@ -2,16 +2,14 @@
 
 ## Requirements
 
-- Python 3.8 or newer
-- `pip`
+- Python 3.8+
+- `requests` library
 
-## Steps
+## Quick Install
 
 ```bash
 git clone https://github.com/ZerionSec/aegisscan.git
 cd aegisscan
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
@@ -21,8 +19,12 @@ pip install -r requirements.txt
 python scanner.py --help
 ```
 
-## Optional: Development dependencies
+## Optional: Virtual Environment
 
 ```bash
-pip install pytest
+python -m venv .venv
+source .venv/bin/activate   # Linux/macOS
+# or
+.venv\Scripts\activate      # Windows
+pip install -r requirements.txt
 ```
